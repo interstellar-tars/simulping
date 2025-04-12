@@ -36,7 +36,9 @@
     }
     .panel img {
       width: 100%;
-      border-radius: 50%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
     }
     .panel h2 {
       text-align: center;
@@ -69,6 +71,14 @@
     .panel .info strong {
       color: #333;
     }
+    .search-bar {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -77,6 +87,10 @@
     <h1>Simulping | Roblox Dashboard</h1>
   </header>
 
+  <div style="padding: 20px; text-align: center;">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search for a user, game, or group..." onkeyup="searchContent()">
+  </div>
+
   <div class="container" id="results-container">
     <!-- Panels will be injected here -->
   </div>
@@ -84,81 +98,99 @@
   <script>
     // Function to fetch data from the Cloudflare Worker
     async function fetchData(type, identifier) {
-      const response = await fetch(`https://simulping-api-worker.cubiodojo.workers.dev/${type}?${type}Id=${identifier}`);
-      return await response.json();
+      try {
+        const response = await fetch(`https://simulping-api-worker.cubiodojo.workers.dev/${type}?${type}Id=${identifier}`);
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        return null;
+      }
     }
 
-    // Function to display a user panel
+    // Function to display the user details panel
     function createUserPanel(user) {
       const panel = document.createElement('div');
       panel.classList.add('panel');
       panel.innerHTML = `
-        <img src="${user.avatarUrl}" alt="User Avatar">
-        <h2>${user.username}</h2>
-        <p>${user.description}</p>
+        <h2>User Information</h2>
         <div class="info">
-          <div><strong>ID:</strong> ${user.id}</div>
           <div><strong>Username:</strong> ${user.username}</div>
+          <div><strong>Display Name:</strong> ${user.displayName}</div>
+          <div><strong>User ID:</strong> ${user.id}</div>
         </div>
-        <button onclick="fetchAndDisplay('user', '${user.username}')">Fetch User</button>
       `;
       return panel;
     }
 
-    // Function to display a group panel
-    function createGroupPanel(group) {
+    // Function to display the user's social stats panel
+    function createSocialStatsPanel(user) {
       const panel = document.createElement('div');
       panel.classList.add('panel');
       panel.innerHTML = `
-        <h2>${group.name}</h2>
-        <p>${group.description}</p>
+        <h2>Social Stats</h2>
         <div class="info">
-          <div><strong>Group ID:</strong> ${group.id}</div>
-          <div><strong>Member Count:</strong> ${group.memberCount}</div>
+          <div><strong>Friends:</strong> ${user.friendsCount}</div>
+          <div><strong>Followers:</strong> ${user.followersCount}</div>
+          <div><strong>Following:</strong> ${user.followingCount}</div>
         </div>
-        <button onclick="fetchAndDisplay('group', '${group.id}')">Fetch Group</button>
       `;
       return panel;
     }
 
-    // Function to display a game panel
-    function createGamePanel(game) {
+    // Function to display the user's avatar and info panel
+    function createAvatarPanel(user) {
       const panel = document.createElement('div');
       panel.classList.add('panel');
       panel.innerHTML = `
-        <h2>${game.name}</h2>
-        <p>${game.description}</p>
+        <h2>Avatar</h2>
+        <img src="${user.avatarUrl}" alt="User Avatar">
         <div class="info">
-          <div><strong>Game ID:</strong> ${game.id}</div>
-          <div><strong>Genre:</strong> ${game.genre}</div>
+          <div><strong>Description:</strong> ${user.description || 'No description available'}</div>
         </div>
-        <button onclick="fetchAndDisplay('game', '${game.id}')">Fetch Game</button>
       `;
       return panel;
     }
 
-    // Function to fetch and display user, group, or game data
-    async function fetchAndDisplay(type, identifier) {
-      const data = await fetchData(type, identifier);
-      
-      let panel;
-      if (type === 'user') {
-        panel = createUserPanel(data);
-      } else if (type === 'group') {
-        panel = createGroupPanel(data);
-      } else if (type === 'game') {
-        panel = createGamePanel(data);
+    // Function to display the user's games, groups, and items panel
+    function createGamesGroupsItemsPanel(user) {
+      const panel = document.createElement('div');
+      panel.classList.add('panel');
+      panel.innerHTML = `
+        <h2>Games, Groups, and Items</h2>
+        <div class="info">
+          <div><strong>Games:</strong> ${user.games.join(', ') || 'No games available'}</div>
+          <div><strong>Groups:</strong> ${user.groups.join(', ') || 'No groups available'}</div>
+          <div><strong>Items:</strong> ${user.items.join(', ') || 'No items available'}</div>
+        </div>
+      `;
+      return panel;
+    }
+
+    // Main function to search and display content
+    async function searchContent() {
+      const searchQuery = document.getElementById('searchInput').value;
+      if (searchQuery.trim() === '') {
+        document.getElementById('results-container').innerHTML = '';
+        return;
       }
 
-      const container = document.getElementById('results-container');
-      container.innerHTML = ''; // Clear previous results
-      container.appendChild(panel); // Add the new panel
-    }
+      const user = await fetchData('user', searchQuery); // Can also use 'group' or 'game' for respective types
 
-    // Initial call to display a sample user, group, and game
-    fetchAndDisplay('user', 'LoveNorSad');
-    fetchAndDisplay('group', '12345678'); // Example group ID
-    fetchAndDisplay('game', '98765432'); // Example game ID
+      if (!user) {
+        document.getElementById('results-container').innerHTML = '<p>No data found</p>';
+        return;
+      }
+
+      // Clear previous results
+      document.getElementById('results-container').innerHTML = '';
+
+      // Create and append all the panels for the user
+      document.getElementById('results-container').appendChild(createUserPanel(user));
+      document.getElementById('results-container').appendChild(createSocialStatsPanel(user));
+      document.getElementById('results-container').appendChild(createAvatarPanel(user));
+      document.getElementById('results-container').appendChild(createGamesGroupsItemsPanel(user));
+    }
   </script>
 </body>
 </html>
