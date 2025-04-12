@@ -1,1 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simulping Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .studio-tab:hover {
+      background-color: #3b82f6;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
 
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 p-4">
+      <h1 class="text-2xl font-bold text-blue-600 mb-6">Simulping</h1>
+      <nav class="space-y-2">
+        <button onclick="switchTab('user')" class="studio-tab w-full text-left px-4 py-2 rounded hover:bg-blue-500 hover:text-white">User Lookup</button>
+        <button onclick="switchTab('group')" class="studio-tab w-full text-left px-4 py-2 rounded hover:bg-blue-500 hover:text-white">Group Lookup</button>
+        <button onclick="switchTab('game')" class="studio-tab w-full text-left px-4 py-2 rounded hover:bg-blue-500 hover:text-white">Game Lookup</button>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 overflow-y-auto">
+      <!-- User Tab -->
+      <section id="tab-user" class="hidden">
+        <h2 class="text-xl font-semibold mb-4">User Lookup</h2>
+        <input id="userInput" type="text" placeholder="Enter username" class="border rounded p-2 w-64" />
+        <button onclick="lookupUser()" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Lookup</button>
+        <pre id="userResult" class="mt-4 bg-white p-4 rounded shadow text-sm overflow-auto"></pre>
+      </section>
+
+      <!-- Group Tab -->
+      <section id="tab-group" class="hidden">
+        <h2 class="text-xl font-semibold mb-4">Group Lookup</h2>
+        <input id="groupInput" type="number" placeholder="Enter group ID" class="border rounded p-2 w-64" />
+        <button onclick="lookupGroup()" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Lookup</button>
+        <pre id="groupResult" class="mt-4 bg-white p-4 rounded shadow text-sm overflow-auto"></pre>
+      </section>
+
+      <!-- Game Tab -->
+      <section id="tab-game" class="hidden">
+        <h2 class="text-xl font-semibold mb-4">Game Lookup</h2>
+        <input id="gameInput" type="number" placeholder="Enter universe ID" class="border rounded p-2 w-64" />
+        <button onclick="lookupGame()" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Lookup</button>
+        <pre id="gameResult" class="mt-4 bg-white p-4 rounded shadow text-sm overflow-auto"></pre>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const apiBase = 'https://simulping-api-worker.cubiodojo.workers.dev';
+
+    function switchTab(tab) {
+      document.querySelectorAll('section[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    }
+
+    async function lookupUser() {
+      const username = document.getElementById('userInput').value;
+      const res = await fetch(`${apiBase}/user?username=${encodeURIComponent(username)}`);
+      const data = await res.json();
+      document.getElementById('userResult').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function lookupGroup() {
+      const id = document.getElementById('groupInput').value;
+      const res = await fetch(`${apiBase}/group?id=${id}`);
+      const data = await res.json();
+      document.getElementById('groupResult').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function lookupGame() {
+      const id = document.getElementById('gameInput').value;
+      const res = await fetch(`${apiBase}/game?id=${id}`);
+      const data = await res.json();
+      document.getElementById('gameResult').textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Default tab
+    switchTab('user');
+  </script>
+</body>
+</html>
