@@ -64,25 +64,36 @@
       document.getElementById(`tab-${tab}`).classList.remove('hidden');
     }
 
-    async function lookupUser() {
-      const username = document.getElementById('userInput').value;
-      const res = await fetch(`${apiBase}/user?username=${encodeURIComponent(username)}`);
-      const data = await res.json();
-      document.getElementById('userResult').textContent = JSON.stringify(data, null, 2);
+    async function safeFetch(endpoint, inputId, resultId) {
+      const query = document.getElementById(inputId).value;
+      const url = `${apiBase}/${endpoint}?${endpoint === 'user' ? 'username' : 'id'}=${encodeURIComponent(query)}`;
+      const output = document.getElementById(resultId);
+      output.textContent = '⏳ Loading...';
+
+      try {
+        const res = await fetch(url);
+        const text = await res.text();
+        try {
+          const data = JSON.parse(text);
+          output.textContent = JSON.stringify(data, null, 2);
+        } catch {
+          output.textContent = `⚠️ Unexpected response:\n\n${text}`;
+        }
+      } catch (err) {
+        output.textContent = `🚨 Error: ${err.message}`;
+      }
     }
 
-    async function lookupGroup() {
-      const id = document.getElementById('groupInput').value;
-      const res = await fetch(`${apiBase}/group?id=${id}`);
-      const data = await res.json();
-      document.getElementById('groupResult').textContent = JSON.stringify(data, null, 2);
+    function lookupUser() {
+      safeFetch('user', 'userInput', 'userResult');
     }
 
-    async function lookupGame() {
-      const id = document.getElementById('gameInput').value;
-      const res = await fetch(`${apiBase}/game?id=${id}`);
-      const data = await res.json();
-      document.getElementById('gameResult').textContent = JSON.stringify(data, null, 2);
+    function lookupGroup() {
+      safeFetch('group', 'groupInput', 'groupResult');
+    }
+
+    function lookupGame() {
+      safeFetch('game', 'gameInput', 'gameResult');
     }
 
     // Default tab
