@@ -1,103 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Simulping Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulping | Roblox Dashboard</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
     }
-    .studio-tab:hover {
-      background-color: #3b82f6;
+    header {
+      background-color: #2a2a2a;
+      padding: 20px;
       color: white;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      padding: 20px;
+    }
+    .panel {
+      width: 280px;
+      margin: 10px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .panel img {
+      width: 100%;
+      border-radius: 50%;
+    }
+    .panel h2 {
+      text-align: center;
+      margin-top: 10px;
+      color: #333;
+    }
+    .panel p {
+      font-size: 14px;
+      color: #555;
+      margin: 10px 0;
+    }
+    .panel button {
+      width: 100%;
+      padding: 10px;
+      background-color: #2a9d8f;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+    .panel button:hover {
+      background-color: #21867a;
+    }
+    .panel .info {
+      margin-top: 15px;
+    }
+    .panel .info div {
+      margin-bottom: 10px;
+    }
+    .panel .info strong {
+      color: #333;
     }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body>
 
-  <div class="flex h-screen">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-white border-r border-gray-200 p-4">
-      <h1 class="text-2xl font-bold text-blue-600 mb-6">Simulping</h1>
-      <nav class="space-y-2">
-        <button onclick="switchTab('user')" class="studio-tab w-full text-left px-4 py-2 rounded hover:bg-blue-500 hover:text-white">User Lookup</button>
-        <button onclick="switchTab('group')" class="studio-tab w-full text-left px-4 py-2 rounded hover:bg-blue-500 hover:text-white">Group Lookup</button>
-        <button onclick="switchTab('game')" class="studio-tab w-full text-left px-4 py-2 rounded hover:bg-blue-500 hover:text-white">Game Lookup</button>
-      </nav>
-    </aside>
+  <header>
+    <h1>Simulping | Roblox Dashboard</h1>
+  </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-6 overflow-y-auto">
-      <!-- User Tab -->
-      <section id="tab-user" class="hidden">
-        <h2 class="text-xl font-semibold mb-4">User Lookup</h2>
-        <input id="userInput" type="text" placeholder="Enter username" class="border rounded p-2 w-64" />
-        <button onclick="lookupUser()" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Lookup</button>
-        <pre id="userResult" class="mt-4 bg-white p-4 rounded shadow text-sm overflow-auto"></pre>
-      </section>
-
-      <!-- Group Tab -->
-      <section id="tab-group" class="hidden">
-        <h2 class="text-xl font-semibold mb-4">Group Lookup</h2>
-        <input id="groupInput" type="number" placeholder="Enter group ID" class="border rounded p-2 w-64" />
-        <button onclick="lookupGroup()" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Lookup</button>
-        <pre id="groupResult" class="mt-4 bg-white p-4 rounded shadow text-sm overflow-auto"></pre>
-      </section>
-
-      <!-- Game Tab -->
-      <section id="tab-game" class="hidden">
-        <h2 class="text-xl font-semibold mb-4">Game Lookup</h2>
-        <input id="gameInput" type="number" placeholder="Enter universe ID" class="border rounded p-2 w-64" />
-        <button onclick="lookupGame()" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Lookup</button>
-        <pre id="gameResult" class="mt-4 bg-white p-4 rounded shadow text-sm overflow-auto"></pre>
-      </section>
-    </main>
+  <div class="container" id="results-container">
+    <!-- Panels will be injected here -->
   </div>
 
   <script>
-    const apiBase = 'https://simulping-api-worker.cubiodojo.workers.dev';
-
-    function switchTab(tab) {
-      document.querySelectorAll('section[id^="tab-"]').forEach(el => el.classList.add('hidden'));
-      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    // Function to fetch data from the Cloudflare Worker
+    async function fetchData(type, identifier) {
+      const response = await fetch(`https://simulping-api-worker.cubiodojo.workers.dev/${type}?${type}Id=${identifier}`);
+      return await response.json();
     }
 
-    async function safeFetch(endpoint, inputId, resultId) {
-      const query = document.getElementById(inputId).value;
-      const url = `${apiBase}/${endpoint}?${endpoint === 'user' ? 'username' : 'id'}=${encodeURIComponent(query)}`;
-      const output = document.getElementById(resultId);
-      output.textContent = '⏳ Loading...';
+    // Function to display a user panel
+    function createUserPanel(user) {
+      const panel = document.createElement('div');
+      panel.classList.add('panel');
+      panel.innerHTML = `
+        <img src="${user.avatarUrl}" alt="User Avatar">
+        <h2>${user.username}</h2>
+        <p>${user.description}</p>
+        <div class="info">
+          <div><strong>ID:</strong> ${user.id}</div>
+          <div><strong>Username:</strong> ${user.username}</div>
+        </div>
+        <button onclick="fetchAndDisplay('user', '${user.username}')">Fetch User</button>
+      `;
+      return panel;
+    }
 
-      try {
-        const res = await fetch(url);
-        const text = await res.text();
-        try {
-          const data = JSON.parse(text);
-          output.textContent = JSON.stringify(data, null, 2);
-        } catch {
-          output.textContent = `⚠️ Unexpected response:\n\n${text}`;
-        }
-      } catch (err) {
-        output.textContent = `🚨 Error: ${err.message}`;
+    // Function to display a group panel
+    function createGroupPanel(group) {
+      const panel = document.createElement('div');
+      panel.classList.add('panel');
+      panel.innerHTML = `
+        <h2>${group.name}</h2>
+        <p>${group.description}</p>
+        <div class="info">
+          <div><strong>Group ID:</strong> ${group.id}</div>
+          <div><strong>Member Count:</strong> ${group.memberCount}</div>
+        </div>
+        <button onclick="fetchAndDisplay('group', '${group.id}')">Fetch Group</button>
+      `;
+      return panel;
+    }
+
+    // Function to display a game panel
+    function createGamePanel(game) {
+      const panel = document.createElement('div');
+      panel.classList.add('panel');
+      panel.innerHTML = `
+        <h2>${game.name}</h2>
+        <p>${game.description}</p>
+        <div class="info">
+          <div><strong>Game ID:</strong> ${game.id}</div>
+          <div><strong>Genre:</strong> ${game.genre}</div>
+        </div>
+        <button onclick="fetchAndDisplay('game', '${game.id}')">Fetch Game</button>
+      `;
+      return panel;
+    }
+
+    // Function to fetch and display user, group, or game data
+    async function fetchAndDisplay(type, identifier) {
+      const data = await fetchData(type, identifier);
+      
+      let panel;
+      if (type === 'user') {
+        panel = createUserPanel(data);
+      } else if (type === 'group') {
+        panel = createGroupPanel(data);
+      } else if (type === 'game') {
+        panel = createGamePanel(data);
       }
+
+      const container = document.getElementById('results-container');
+      container.innerHTML = ''; // Clear previous results
+      container.appendChild(panel); // Add the new panel
     }
 
-    function lookupUser() {
-      safeFetch('user', 'userInput', 'userResult');
-    }
-
-    function lookupGroup() {
-      safeFetch('group', 'groupInput', 'groupResult');
-    }
-
-    function lookupGame() {
-      safeFetch('game', 'gameInput', 'gameResult');
-    }
-
-    // Default tab
-    switchTab('user');
+    // Initial call to display a sample user, group, and game
+    fetchAndDisplay('user', 'LoveNorSad');
+    fetchAndDisplay('group', '12345678'); // Example group ID
+    fetchAndDisplay('game', '98765432'); // Example game ID
   </script>
 </body>
 </html>
